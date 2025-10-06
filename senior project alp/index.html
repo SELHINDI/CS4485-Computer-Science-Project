@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDP Analysis & Predictor Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-chart-line"></i> GDP Analysis & Predictor</h1>
+                <p>Comprehensive economic analysis and forecasting tool</p>
+                <div class="theme-toggle">
+                    <button id="themeToggle" class="theme-btn">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-btn active" data-section="overview">Overview</button>
+            <button class="nav-btn" data-section="analysis">Analysis</button>
+            <button class="nav-btn" data-section="prediction">Prediction</button>
+            <button class="nav-btn" data-section="comparison">Comparison</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview" class="section active">
+                <div class="section-header">
+                    <h2>Economic Overview</h2>
+                    <p>Real-time GDP data and key economic indicators</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="currentGDP">$25.4T</h3>
+                            <p>Current GDP (USD)</p>
+                            <span class="stat-change positive">+2.3%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="growthRate">3.2%</h3>
+                            <p>Growth Rate</p>
+                            <span class="stat-change positive">+0.5%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="perCapita">$76,400</h3>
+                            <p>GDP per Capita</p>
+                            <span class="stat-change positive">+1.8%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="worldRank">#1</h3>
+                            <p>World Ranking</p>
+                            <span class="stat-change neutral">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>GDP Trend (Last 10 Years)</h3>
+                    <canvas id="overviewChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Analysis Section -->
+            <section id="analysis" class="section">
+                <div class="section-header">
+                    <h2>Detailed Analysis</h2>
+                    <p>Comprehensive economic analysis and insights</p>
+                </div>
+
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h3>Growth Analysis</h3>
+                        <canvas id="growthChart"></canvas>
+                        <div class="analysis-insights">
+                            <p><strong>Key Insights:</strong></p>
+                            <ul>
+                                <li>Steady growth trend over the past decade</li>
+                                <li>Peak growth in 2021-2022 period</li>
+                                <li>Recent stabilization indicates economic maturity</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h3>Sector Contribution</h3>
+                        <canvas id="sectorChart"></canvas>
+                        <div class="analysis-insights">
+                            <p><strong>Top Contributors:</strong></p>
+                            <ul>
+                                <li>Services: 78.2%</li>
+                                <li>Manufacturing: 11.1%</li>
+                                <li>Agriculture: 0.9%</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-table">
+                    <h3>Quarterly Performance</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Quarter</th>
+                                <th>GDP (Trillion USD)</th>
+                                <th>Growth Rate</th>
+                                <th>Inflation</th>
+                                <th>Unemployment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quarterlyData">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Prediction Section -->
+            <section id="prediction" class="section">
+                <div class="section-header">
+                    <h2>GDP Prediction</h2>
+                    <p>AI-powered forecasting and trend analysis</p>
+                </div>
+
+                <div class="prediction-controls">
+                    <div class="control-group">
+                        <label for="predictionYears">Forecast Period (Years):</label>
+                        <select id="predictionYears">
+                            <option value="1">1 Year</option>
+                            <option value="2">2 Years</option>
+                            <option value="5" selected>5 Years</option>
+                            <option value="10">10 Years</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="predictionModel">Prediction Model:</label>
+                        <select id="predictionModel">
+                            <option value="linear">Linear Regression</option>
+                            <option value="polynomial">Polynomial</option>
+                            <option value="exponential">Exponential</option>
+                        </select>
+                    </div>
+                    
+                    <button id="generatePrediction" class="btn-primary">
+                        <i class="fas fa-crystal-ball"></i> Generate Prediction
+                    </button>
+                </div>
+
+                <div class="prediction-results">
+                    <div class="prediction-chart">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                    
+                    <div class="prediction-stats">
+                        <h3>Forecast Summary</h3>
+                        <div class="prediction-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Expected GDP (5Y):</span>
+                                <span class="metric-value" id="predictedGDP">$28.7T</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Average Growth:</span>
+                                <span class="metric-value" id="predictedGrowth">2.8%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Confidence Level:</span>
+                                <span class="metric-value" id="confidenceLevel">87%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Comparison Section -->
+            <section id="comparison" class="section">
+                <div class="section-header">
+                    <h2>Country Comparison</h2>
+                    <p>Compare GDP metrics across different countries</p>
+                </div>
+
+                <div class="comparison-controls">
+                    <div class="control-group">
+                        <label for="country1">Country 1:</label>
+                        <select id="country1">
+                            <option value="USA">United States</option>
+                            <option value="CHN">China</option>
+                            <option value="JPN">Japan</option>
+                            <option value="DEU">Germany</option>
+                            <option value="IND">India</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="country2">Country 2:</label>
+                        <select id="country2">
+                            <option value="CHN">China</option>
+                            <option value="USA">United States</option>
+                            <option value="JPN">Japan</option>
+                            <option value="DEU">Germany</option>
+                            <option value="IND">India</option>
+                        </select>
+                    </div>
+                    
+                    <button id="compareCountries" class="btn-primary">
+                        <i class="fas fa-balance-scale"></i> Compare
+                    </button>
+                </div>
+
+                <div class="comparison-results">
+                    <div class="comparison-chart">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                    
+                    <div class="comparison-table">
+                        <h3>Comparison Metrics</h3>
+                        <table id="comparisonTable">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th id="country1Name">USA</th>
+                                    <th id="country2Name">China</th>
+                                    <th>Difference</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>GDP (USD)</td>
+                                    <td id="country1GDP">$25.4T</td>
+                                    <td id="country2GDP">$17.7T</td>
+                                    <td id="gdpDiff">+43.5%</td>
+                                </tr>
+                                <tr>
+                                    <td>GDP per Capita</td>
+                                    <td id="country1PerCapita">$76,400</td>
+                                    <td id="country2PerCapita">$12,500</td>
+                                    <td id="perCapitaDiff">+511%</td>
+                                </tr>
+                                <tr>
+                                    <td>Growth Rate</td>
+                                    <td id="country1Growth">3.2%</td>
+                                    <td id="country2Growth">5.1%</td>
+                                    <td id="growthDiff">-37.3%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 GDP Analysis & Predictor Tool. Built with modern web technologies.</p>
+                <div class="footer-links">
+                    <a href="#"><i class="fas fa-info-circle"></i> About</a>
+                    <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+                    <a href="#"><i class="fas fa-code"></i> GitHub</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

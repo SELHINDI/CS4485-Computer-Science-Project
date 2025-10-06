@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDP Analysis & Predictor Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo">
+                        <i class="fas fa-chart-line"></i>
+                        <span>GDP Analyzer</span>
+                    </div>
+                    <p class="header-subtitle">Economic Analysis & AI Predictions</p>
+                </div>
+                <div class="header-right">
+                    <div class="theme-toggle">
+                        <button id="themeToggle" class="theme-btn">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </div>
+                    <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-btn active" data-section="overview">
+                <i class="fas fa-home"></i>
+                <span>Overview</span>
+            </button>
+            <button class="nav-btn" data-section="analysis">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analysis</span>
+            </button>
+            <button class="nav-btn" data-section="prediction">
+                <i class="fas fa-crystal-ball"></i>
+                <span>Prediction</span>
+            </button>
+            <button class="nav-btn" data-section="comparison">
+                <i class="fas fa-balance-scale"></i>
+                <span>Comparison</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview" class="section active">
+                <div class="section-header">
+                    <h2>Economic Overview</h2>
+                    <p>GDP data and economic indicators</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="currentGDP">Loading...</h3>
+                            <p>Current GDP (USD)</p>
+                            <span class="stat-change" id="gdpChange">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="growthRate">Loading...</h3>
+                            <p>Growth Rate</p>
+                            <span class="stat-change" id="growthChange">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="perCapita">Loading...</h3>
+                            <p>GDP per Capita</p>
+                            <span class="stat-change" id="perCapitaChange">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="worldRank">Loading...</h3>
+                            <p>World Ranking</p>
+                            <span class="stat-change neutral">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>GDP Trend Analysis</h3>
+                        <div class="chart-controls">
+                            <select id="countrySelect" class="chart-select">
+                                <option value="USA">United States</option>
+                                <option value="CHN">China</option>
+                                <option value="JPN">Japan</option>
+                                <option value="DEU">Germany</option>
+                                <option value="IND">India</option>
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="overviewChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Analysis Section -->
+            <section id="analysis" class="section">
+                <div class="section-header">
+                    <h2>Analysis</h2>
+                    <p>Economic analysis and insights</p>
+                </div>
+
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h3>Growth Analysis</h3>
+                        <canvas id="growthChart"></canvas>
+                        <div class="analysis-insights">
+                            <p><strong>Key Insights:</strong></p>
+                            <ul id="growthInsights">
+                                <li>Loading analysis...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h3>Sector Contribution</h3>
+                        <canvas id="sectorChart"></canvas>
+                        <div class="analysis-insights">
+                            <p><strong>Top Contributors:</strong></p>
+                            <ul id="sectorInsights">
+                                <li>Loading sector data...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-table">
+                    <h3>Quarterly Performance</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Quarter</th>
+                                    <th>GDP (Trillion USD)</th>
+                                    <th>Growth Rate</th>
+                                    <th>Inflation</th>
+                                    <th>Unemployment</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quarterlyData">
+                                <tr><td colspan="5">Loading data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prediction Section -->
+            <section id="prediction" class="section">
+                <div class="section-header">
+                    <h2>AI Prediction</h2>
+                    <p>Machine learning forecasting</p>
+                </div>
+
+                <div class="prediction-controls">
+                    <div class="control-group">
+                        <label for="predictionCountry">Country:</label>
+                        <select id="predictionCountry">
+                            <option value="USA">United States</option>
+                            <option value="CHN">China</option>
+                            <option value="JPN">Japan</option>
+                            <option value="DEU">Germany</option>
+                            <option value="IND">India</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="predictionYears">Forecast Period:</label>
+                        <select id="predictionYears">
+                            <option value="1">1 Year</option>
+                            <option value="2">2 Years</option>
+                            <option value="5" selected>5 Years</option>
+                            <option value="10">10 Years</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="predictionModel">AI Model:</label>
+                        <select id="predictionModel">
+                            <option value="linear">Linear Regression</option>
+                            <option value="polynomial">Polynomial Regression</option>
+                            <option value="exponential">Exponential Growth</option>
+                        </select>
+                    </div>
+                    
+                    <button id="generatePrediction" class="btn-primary">
+                        <i class="fas fa-brain"></i>
+                        <span>Generate Prediction</span>
+                    </button>
+                </div>
+
+                <div class="prediction-results" id="predictionResults" style="display: none;">
+                    <div class="prediction-chart">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                    
+                    <div class="prediction-stats">
+                        <h3>AI Forecast Summary</h3>
+                        <div class="prediction-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Expected GDP (5Y):</span>
+                                <span class="metric-value" id="predictedGDP">-</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Model Accuracy:</span>
+                                <span class="metric-value" id="modelAccuracy">-</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Confidence Level:</span>
+                                <span class="metric-value" id="confidenceLevel">-</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">R² Score:</span>
+                                <span class="metric-value" id="r2Score">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Comparison Section -->
+            <section id="comparison" class="section">
+                <div class="section-header">
+                    <h2>Comparison</h2>
+                    <p>Compare countries</p>
+                </div>
+
+                <div class="comparison-controls">
+                    <div class="control-group">
+                        <label for="country1">Country 1:</label>
+                        <select id="country1">
+                            <option value="USA">United States</option>
+                            <option value="CHN">China</option>
+                            <option value="JPN">Japan</option>
+                            <option value="DEU">Germany</option>
+                            <option value="IND">India</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="country2">Country 2:</label>
+                        <select id="country2">
+                            <option value="CHN">China</option>
+                            <option value="USA">United States</option>
+                            <option value="JPN">Japan</option>
+                            <option value="DEU">Germany</option>
+                            <option value="IND">India</option>
+                        </select>
+                    </div>
+                    
+                    <button id="compareCountries" class="btn-primary">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Compare Countries</span>
+                    </button>
+                </div>
+
+                <div class="comparison-results" id="comparisonResults" style="display: none;">
+                    <div class="comparison-chart">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                    
+                    <div class="comparison-table">
+                        <h3>Comparison Metrics</h3>
+                        <div class="table-container">
+                            <table id="comparisonTable">
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th id="country1Name">-</th>
+                                        <th id="country2Name">-</th>
+                                        <th>Difference</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>GDP (USD)</td>
+                                        <td id="country1GDP">-</td>
+                                        <td id="country2GDP">-</td>
+                                        <td id="gdpDiff">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GDP per Capita</td>
+                                        <td id="country1PerCapita">-</td>
+                                        <td id="country2PerCapita">-</td>
+                                        <td id="perCapitaDiff">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Growth Rate</td>
+                                        <td id="country1Growth">-</td>
+                                        <td id="country2Growth">-</td>
+                                        <td id="growthDiff">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; 2024 GDP Analysis & Predictor Tool. Powered by AI & Machine Learning.</p>
+                </div>
+                <div class="footer-right">
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">
+                            <i class="fas fa-info-circle"></i>
+                            <span>About</span>
+                        </a>
+                        <a href="#" class="footer-link">
+                            <i class="fas fa-envelope"></i>
+                            <span>Contact</span>
+                        </a>
+                        <a href="#" class="footer-link">
+                            <i class="fas fa-code"></i>
+                            <span>GitHub</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  gdp-analyzer:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+    volumes:
+      - ./gdp_data.db:/app/gdp_data.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/countries"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
