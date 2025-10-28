@@ -30,8 +30,8 @@ export default function Dashboard() {
   const oneData = analyzeMutation.data
 
   // Prepare sparkline and chart data
-  const spark = (series.data?.series.gdp.slice(-12) ?? []).map((p: SeriesPoint) => p.value)
-  const chartData: SeriesPoint[] = (series.data?.series.gdp ?? []).map((p: SeriesPoint) => ({
+  const spark = (series.data?.gdp.slice(-12) ?? []).map((p: SeriesPoint) => p.value)
+  const chartData: SeriesPoint[] = (series.data?.gdp ?? []).map((p: SeriesPoint) => ({
     date: p.date,
     value: p.value,
   }))
