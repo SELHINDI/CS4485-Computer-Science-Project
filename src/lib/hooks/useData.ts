@@ -1,32 +1,50 @@
-import { useQuery } from '@tanstack/react-query'
-import { getOneStep, getMulti, getSeries, getMetrics } from '../api/mock'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { getCountries, getCountryData, analyzeCountry, compareCountries, getHealth } from '../api/api'
 
-export function useOneStep(country: string, asOf: string | null) {
+export function useCountries() {
   return useQuery({
-    queryKey: ['one-step', country, asOf],
-    queryFn: () => getOneStep(country, asOf),
+    queryKey: ['countries'],
+    queryFn: () => getCountries(),
   })
 }
 
-export function useMulti(country: string, horizons: number[], asOf: string | null) {
+export function useCountryData(country: string, startYear?:number, endYear?: number) {
   return useQuery({
-    queryKey: ['multi', country, horizons.sort().join(','), asOf],
-    queryFn: () => getMulti(country, horizons, asOf),
-    enabled: horizons.length > 0,
+    queryKey: ['country-data', country, startYear, endYear],
+    queryFn: () => getCountryData(country, startYear, endYear),
+    enabled: !!country,
   })
 }
 
-export function useSeries(country: string, fromYear?: number, toYear?: number) {
-  return useQuery({
-    queryKey: ['series', country, fromYear, toYear],
-    queryFn: () => getSeries(country, fromYear, toYear),
-  })
+export function useAnalyzeCountry(
+  country: string,
+  options?: {
+    start_year?: number;
+    end_year?: number;
+    prediction_years?: number;
+    model_type?: string;
+  }
+) {
+  return useMutation({
+    mutationFn: () => analyzeCountry(country, options),
+  });
 }
 
-export function useMetrics(fromYear?: number, toYear?: number) {
+/** Compare multiple countries */
+export function useCompareCountries(
+  countries: string[],
+  startYear?: number,
+  endYear?: number
+) {
+  return useMutation({
+    mutationFn: () => compareCountries(countries, startYear, endYear),
+  });
+}
+
+export function useHealthCheck() {
   return useQuery({
-    queryKey: ['metrics', fromYear, toYear],
-    queryFn: () => getMetrics(fromYear, toYear),
+    queryKey: ['health'],
+    queryFn: () => getHealth(),
   })
 }
 

@@ -1,21 +1,31 @@
 import { useState } from 'react'
 import { useApp } from '../app/context/AppContext'
-import { useSeries } from '../lib/hooks/useData'
+import { useCountryData } from '../lib/hooks/useData'
 import { ForecastChart } from '../app/components/ForecastChart'
 import { Skeleton } from '../app/components/States'
+
+// Type for each data point in the series
+type SeriesPoint = { date: string; value: number }
 
 export default function Explorer() {
   const [tab, setTab] = useState<'proxies' | 'macro'>('proxies')
   const { country, unitMode } = useApp()
-  const s = useSeries(country, 2015, 2025)
+
+  // Fetch historical series data
+  const s = useCountryData(country, 2015, 2025)
 
   type SeriesKey = 'level' | 'slope' | 'curvature' | 'inflation' | 'unemp' | 'caputil' | 'fedfunds'
-  const mk = (key: SeriesKey) => (s.data?.series[key] ?? []).map(p => ({ date: p.date, value: p.value }))
+
+  // Helper to extract series points from API response
+  const mk = (key: SeriesKey): SeriesPoint[] =>
+    (s.data?.series[key] ?? []).map((p: SeriesPoint) => ({ date: p.date, value: p.value }))
+
   const proxiesData = [
     { label: 'Level', data: mk('level') },
     { label: 'Slope', data: mk('slope') },
     { label: 'Curvature', data: mk('curvature') },
   ]
+
   const macroData = [
     { label: 'Inflation', data: mk('inflation') },
     { label: 'Unemployment', data: mk('unemp') },
@@ -25,10 +35,27 @@ export default function Explorer() {
 
   return (
     <div className="space-y-4">
+      {/* Tab buttons */}
       <div className="card p-2 flex gap-2">
-        <button className={`px-3 py-1 rounded-md border ${tab==='proxies'?'bg-primary text-white border-primary':''}`} onClick={() => setTab('proxies')}>Yield Curve Proxies</button>
-        <button className={`px-3 py-1 rounded-md border ${tab==='macro'?'bg-primary text-white border-primary':''}`} onClick={() => setTab('macro')}>Macro</button>
+        <button
+          className={`px-3 py-1 rounded-md border ${
+            tab === 'proxies' ? 'bg-primary text-white border-primary' : ''
+          }`}
+          onClick={() => setTab('proxies')}
+        >
+          Yield Curve Proxies
+        </button>
+        <button
+          className={`px-3 py-1 rounded-md border ${
+            tab === 'macro' ? 'bg-primary text-white border-primary' : ''
+          }`}
+          onClick={() => setTab('macro')}
+        >
+          Macro
+        </button>
       </div>
+
+      {/* Charts */}
       {s.isLoading ? (
         <Skeleton className="h-40" />
       ) : tab === 'proxies' ? (
@@ -47,5 +74,3 @@ export default function Explorer() {
     </div>
   )
 }
-
-
