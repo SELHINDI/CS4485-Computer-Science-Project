@@ -13,25 +13,34 @@ export default function Explorer() {
 
   // Fetch historical series data
   const s = useCountryData(country, 2015, 2025)
+  console.log("full hook results:", s)
+  console.log("Series data from API:", s.data?.series)
+  console.log("Full API response:", s.data?.data)
 
-  type SeriesKey = 'level' | 'slope' | 'curvature' | 'inflation' | 'unemp' | 'caputil' | 'fedfunds'
+  type SeriesKey = 'exports' | 'imports' | 'gdp' | 'gdp_growth' | 'gdp_per_capita' | 'inflation' | 'unemployment' | 'population'
 
   // Helper to extract series points from API response
   const mk = (key: SeriesKey): SeriesPoint[] =>
-    (s.data?.series[key] ?? []).map((p: SeriesPoint) => ({ date: p.date, value: p.value }))
+    s.data?.data?.[key]?.map((p: any) => ({
+      date: p.date ?? p.year ?? "Unknown",
+      value: p.value ?? p.gdp ?? p.level ?? 0,
+    })) ?? [];
+  
 
-  const proxiesData = [
-    { label: 'Level', data: mk('level') },
-    { label: 'Slope', data: mk('slope') },
-    { label: 'Curvature', data: mk('curvature') },
-  ]
-
-  const macroData = [
-    { label: 'Inflation', data: mk('inflation') },
-    { label: 'Unemployment', data: mk('unemp') },
-    { label: 'Capacity Utilization', data: mk('caputil') },
-    { label: 'Fed Funds', data: mk('fedfunds') },
-  ]
+    const proxiesData = [
+      { label: 'Exports', data: mk('exports') },
+      { label: 'Imports', data: mk('imports') },
+      { label: 'GDP', data: mk('gdp') },
+    ]
+    
+    const macroData = [
+      { label: 'GDP Growth', data: mk('gdp_growth') },
+      { label: 'GDP per Capita', data: mk('gdp_per_capita') },
+      { label: 'Inflation', data: mk('inflation') },
+      { label: 'Unemployment', data: mk('unemployment') },
+    ]
+  console.log("Proxies chart data:", proxiesData)
+console.log("Macro chart data:", macroData)
 
   return (
     <div className="space-y-4">

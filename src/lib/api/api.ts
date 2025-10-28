@@ -1,13 +1,6 @@
-
+import type { AnalyzeResponse } from "./type";
 
 export type CountryData = Record<string, any>;
-export type AnalyzeResponse = {
-  historical_data: any;
-  predictions: any;
-  model_performance: any;
-  feature_importance?: any;
-  analysis_metadata: any;
-};
 export type CompareResponse = Record<string, any>;
 export type HealthResponse = {
   status: string;
@@ -26,7 +19,7 @@ async function handleResponse(res: Response) {
   }
   const json = await res.json();
   if (json.status === "error") throw new Error(json.message);
-  return json.data ?? json;
+  return json;
 }
 
 /** Get list of available countries */
@@ -52,20 +45,21 @@ export async function getCountryData(
 /** Perform analysis (train + predict) for a specific country */
 export async function analyzeCountry(
   country: string,
-  options: {
+  options?: {
     start_year?: number;
     end_year?: number;
     prediction_years?: number;
     model_type?: string;
-  } = {}
+  }
 ): Promise<AnalyzeResponse> {
-  const body = JSON.stringify(options);
   const res = await fetch(`${BASE_URL}/analyze/${country}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body,
+    body: JSON.stringify(options || {}),
   });
-  return handleResponse(res);
+
+  if (!res.ok) throw new Error(`Failed to analyze ${country}`);
+  return res.json();
 }
 
 /** Compare multiple countries */
