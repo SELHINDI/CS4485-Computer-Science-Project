@@ -1,5 +1,5 @@
-import { useState } from 'react'
-//import { useMetrics } from '../lib/hooks/useData'
+import { useState, useEffect } from 'react'
+import { useAnalyzeCountry } from '../lib/hooks/useData'
 import {
   LineChart,
   Line,
@@ -15,7 +15,7 @@ import {
 import { DataTable } from '../app/components/DataTable'
 import { Skeleton } from '../app/components/States'
 
-// Type definitions for metrics API response
+// Types for chart data
 type MSEPoint = { date: string; mse: number }
 type AvgMSE = Record<string, number>
 
@@ -23,22 +23,34 @@ export default function Metrics() {
   const [from, setFrom] = useState(2018)
   const [to, setTo] = useState(2025)
 
-  // Fetch metrics from real API
-  const m = useMetrics(from, to)
+  // Call the mutation hook
+  const analyzeMutation = useAnalyzeCountry('USA', {
+    start_year: from,
+    end_year: to,
+    prediction_years: 1
+  })
 
-  const mseTimeline: MSEPoint[] = m.data?.one_step.timeline ?? []
-  const avg: AvgMSE = m.data?.one_step.avg_mse ?? {}
+  // Trigger mutation on mount or year changes
+  useEffect(() => {
+    analyzeMutation.mutate()
+  }, [from, to])
+
+  const isLoading: boolean = analyzeMutation.status === 'loading'
+  const data = analyzeMutation.data?.data
+
+  // Prepare chart data
+  const mseTimeline: MSEPoint[] = data?.model_performance?.one_step?.timeline ?? []
+  const avg: AvgMSE = data?.model_performance?.one_step?.avg_mse ?? {}
+
   const barData = Object.entries(avg).map(([model, val]) => ({
     model: model.toUpperCase(),
     mse: val
   }))
 
-  // Generate table data
-  const table = mseTimeline.map((t: MSEPoint) => ({
+  // Table data (simplified)
+  const table = mseTimeline.map((t) => ({
     date: t.date,
-    y_true: (Math.random() * 100).toFixed(1), // replace with real y_true if available
-    y_pred: (Math.random() * 100).toFixed(1), // replace with real y_pred if available
-    abs_error: t.mse.toFixed(4)
+    mse: t.mse.toFixed(4)
   }))
 
   return (
@@ -68,13 +80,13 @@ export default function Metrics() {
       </div>
 
       {/* One-step MSE line chart */}
-      {m.isLoading ? (
+      {isLoading ? (
         <Skeleton className="h-64" />
       ) : (
         <div className="card p-4">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mseTimeline} accessibilityLayer>
+              <LineChart data={mseTimeline}>
                 <CartesianGrid strokeDasharray="4 4" strokeOpacity={0.3} />
                 <XAxis dataKey="date" minTickGap={48} />
                 <YAxis />
@@ -94,13 +106,13 @@ export default function Metrics() {
       )}
 
       {/* Avg MSE bar chart */}
-      {m.isLoading ? (
+      {isLoading ? (
         <Skeleton className="h-64" />
       ) : (
         <div className="card p-4">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} accessibilityLayer>
+              <BarChart data={barData}>
                 <CartesianGrid strokeDasharray="4 4" strokeOpacity={0.3} />
                 <XAxis dataKey="model" />
                 <YAxis />
@@ -118,9 +130,7 @@ export default function Metrics() {
         data={table}
         columns={[
           { key: 'date', header: 'Date' },
-          { key: 'y_true', header: 'y_true' },
-          { key: 'y_pred', header: 'y_pred' },
-          { key: 'abs_error', header: 'abs error' }
+          { key: 'mse', header: 'MSE' }
         ]}
         filename="metrics_detail.csv"
       />

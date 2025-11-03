@@ -16,6 +16,19 @@ export function useCountryData(country: string, startYear?:number, endYear?: num
   })
 }
 
+export function useCountryAnalysis(
+  country: string,
+  start_year: number,
+  end_year: number,
+  prediction_years = 1
+) {
+  return useQuery({
+    queryKey: ['country-analysis', country, start_year, end_year],
+    queryFn: () => analyzeCountry(country, { start_year, end_year, prediction_years }),
+    enabled: !!country,
+  })
+}
+
 export function useAnalyzeCountry(
   country: string,
   options?: {
