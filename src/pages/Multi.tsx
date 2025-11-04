@@ -6,21 +6,31 @@ import { DataTable } from "../app/components/DataTable"
 import { Skeleton } from "../app/components/States"
 import { useMemo, useEffect } from "react"
 
+interface ActualDataPoint {
+  date: string
+  value: number
+}
+
+interface PredictedDataPoint {
+  date: string
+  predicted: number
+}
+
 export default function Multi() {
   const { country, horizons, unitMode } = useApp()
 
-  // Prepare options for analysis
-  const options = useMemo(() => ({
-    prediction_years: horizons.length,
-    start_year: 2015,
-    end_year: 2030,
-    model_type: "random_forest",
-  }), [horizons])
+  const options = useMemo(
+    () => ({
+      prediction_years: horizons.length,
+      start_year: 2015,
+      end_year: 2030,
+      model_type: "random_forest",
+    }),
+    [horizons]
+  )
 
-  // Mutation hook
   const multi = useAnalyzeCountry(country, options)
 
-  // Trigger analysis when country or horizons change
   useEffect(() => {
     if (horizons.length > 0) {
       multi.mutate()
@@ -33,38 +43,58 @@ export default function Multi() {
     }
   }, [multi.data])
 
-  // Separate arrays for actual and predicted data
-  const actualData = useMemo(() => {
+  // ACTUAL DATA
+  const actualData: ActualDataPoint[] = useMemo(() => {
     const historical = multi.data?.data?.historical_data?.gdp ?? []
-    return historical
+    let data: ActualDataPoint[] = historical
       .map((d: any) => ({
         date: String(d.year),
-        value: d.value
+        value: d.value,
       }))
-      .sort((a: { date: string }, b: { date: string }) => Number(a.date) - Number(b.date))
-  }, [multi.data])
-  
-  const predictedData = useMemo(() => {
+      .sort((a: ActualDataPoint, b: ActualDataPoint) => Number(a.date) - Number(b.date))
+
+    if (unitMode === "pct_qoq") {
+      data = data.map((point, i, arr) => {
+        if (i === 0) return { ...point, value: 0 }
+        const prev = arr[i - 1].value
+        const pctChange = prev ? ((point.value - prev) / prev) * 100 : 0
+        return { ...point, value: pctChange }
+      })
+    }
+
+    return data
+  }, [multi.data, unitMode])
+
+  // PREDICTED DATA
+  const predictedData: PredictedDataPoint[] = useMemo(() => {
     const predictions = multi.data?.data?.predictions ?? []
-    return predictions
+    let data: PredictedDataPoint[] = predictions
       .map((p: any) => ({
         date: String(p.year),
-        predicted: p.predicted_gdp
+        predicted: p.predicted_gdp,
       }))
-      .sort((a: { date: string }, b: { date: string }) => Number(a.date) - Number(b.date))
-  }, [multi.data])
+      .sort((a: PredictedDataPoint, b: PredictedDataPoint) => Number(a.date) - Number(b.date))
 
-  // Table rows for predicted GDP
+
+    if (unitMode === "pct_qoq") {
+      data = data.map((point, i, arr) => {
+        if (i === 0) return { ...point, predicted: 0 }
+        const prev = arr[i - 1].predicted
+        const pctChange = prev ? ((point.predicted - prev) / prev) * 100 : 0
+        return { ...point, predicted: pctChange }
+      })
+    }
+
+    return data
+  }, [multi.data, unitMode])
+
   const tableRows = useMemo(() => {
     const predictions = multi.data?.data?.predictions ?? []
     return predictions.map((p: any) => ({
       horizon: p.year,
-      gdp: p.predicted_gdp
+      gdp: p.predicted_gdp,
     }))
   }, [multi.data])
-
-  console.log('Actual Data:', actualData)
-  console.log('Predicted Data:', predictedData)
 
   const isLoading = multi.status === "pending"
 
@@ -86,9 +116,14 @@ export default function Multi() {
 
           {/* Predicted GDP chart */}
           <div className="flex-1 min-w-[300px]">
-            <ForecastChart data={predictedData} unitMode={unitMode} showLegend lineDataKey="predicted" 
-  lineName="Predicted" 
-  stroke="#7bdcb5"/>
+            <ForecastChart
+              data={predictedData}
+              unitMode={unitMode}
+              showLegend
+              lineDataKey="predicted"
+              lineName="Predicted"
+              stroke="#7bdcb5"
+            />
           </div>
         </div>
       )}
@@ -96,12 +131,12 @@ export default function Multi() {
       <DataTable
         data={tableRows}
         columns={[
-          { key: 'horizon', header: 'Horizon' },
+          { key: "horizon", header: "Horizon" },
           {
-            key: 'gdp',
-            header: 'Predicted GDP',
-            render: (r) => Number(r.gdp).toLocaleString()
-          }
+            key: "gdp",
+            header: "Predicted GDP",
+            render: (r) => Number(r.gdp).toLocaleString(),
+          },
         ]}
         filename="multi_forecast.csv"
       />

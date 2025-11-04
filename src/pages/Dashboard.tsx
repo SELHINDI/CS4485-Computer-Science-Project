@@ -14,12 +14,8 @@ export default function Dashboard() {
   const { country, unitMode } = useApp()
 
   // Fetch historical GDP data
-  const { data: series, isPending, isError, isSuccess } = useCountryData(country, 2015, 2025)
+  const { data: series, isPending, isError } = useCountryData(country, 2015, 2025)
   
-
-  
-  
-
   // Trigger analysis when country changes
   const analyzeMutation = useAnalyzeCountry(country, {
     start_year: 2015,
@@ -27,32 +23,36 @@ export default function Dashboard() {
     prediction_years: 1,
   })
 
-
   useEffect(() => {
     if (country) analyzeMutation.mutate()
   }, [country])
+
   if (isPending) return <p>Loading data...</p>
-if (isError) return <p>Failed to load data.</p>
-console.log("Fetched series:", series);
+  if (isError) return <p>Failed to load data.</p>
 
-  // API response shape
-  const rawData = analyzeMutation.data;
-const oneData: AnalysisData | undefined =
-  (rawData && "data" in rawData ? rawData.data : rawData) as AnalysisData | undefined;
- 
+  // Parse analysis API response
+  const rawData = analyzeMutation.data
+  const oneData: AnalysisData | undefined =
+    (rawData && "data" in rawData ? rawData.data : rawData) as AnalysisData | undefined
 
-  // Chart and sparkline
-  const spark = (series.data?.gdp ? series.data.gdp.slice(-12) : []).map(
-    (p: SeriesPoint) => p.value
-  )
-  
-
-  const chartData: SeriesPoint[] = (series.data?.gdp ?? []).map((p: any) => ({
+  // Build base chart data
+  let chartData: SeriesPoint[] = (series.data?.gdp ?? []).map((p: any) => ({
     date: p.year.toString(),
     value: p.value ?? p.gdp,
   }))
 
-  const lastDate = chartData.at(-1)?.date
+  // Sort in ascending order (smallest year → largest)
+  chartData.sort((a: SeriesPoint, b: SeriesPoint) => Number(a.date) - Number(b.date))
+
+  // If user selected %QoQ, compute percentage change
+  if (unitMode === "pct_qoq") {
+    chartData = chartData.map((point, i, arr) => {
+      if (i === 0) return { ...point, value: 0 } // baseline
+      const prev = arr[i - 1].value
+      const pctChange = prev ? ((point.value - prev) / prev) * 100 : 0
+      return { ...point, value: pctChange }
+    })
+  }
 
   // Append predicted GDP (from backend)
   const predictedValue =
@@ -60,14 +60,22 @@ const oneData: AnalysisData | undefined =
     oneData?.predictions?.predicted_gdp ??
     null
 
-    if (oneData && predictedValue !== null && lastDate) {
-      chartData.push({
-        date: oneData.analysis_metadata.timestamp,
-        value: predictedValue,
-        predicted: predictedValue,
-      })
-    }
-    console.log("Chart data:", chartData)
+  const lastDate = chartData.at(-1)?.date
+
+  if (oneData && predictedValue !== null && lastDate) {
+    chartData.push({
+      date: oneData.analysis_metadata.timestamp,
+      value: predictedValue,
+      predicted: predictedValue,
+    })
+  }
+
+  // Sparkline data (for MetricCard)
+  const spark = (series.data?.gdp ? series.data.gdp.slice(-12) : []).map(
+    (p: SeriesPoint) => p.value
+  )
+  console.log("Series data:", series.data)
+
   return (
     <div className="space-y-4">
       <Controls />
