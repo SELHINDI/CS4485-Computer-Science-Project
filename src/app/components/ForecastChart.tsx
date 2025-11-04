@@ -8,10 +8,18 @@ type Props = {
   data: SeriesPoint[]
   unitMode: 'level' | 'pct_qoq'
   showLegend?: boolean
+  lineDataKey?: string
+  lineName?: string
+  stroke?: string
 }
 
 export function ForecastChart({ data, unitMode, showLegend }: Props) {
   const ref = useRef<HTMLDivElement>(null)
+
+  // Check which lines exist in the data
+  const hasActual = data.some(d => d.value !== undefined)
+  const hasPredicted = data.some(d => d.predicted !== undefined)
+
   return (
     <div className="card p-4" role="group" aria-label="Forecast chart">
       <div className="flex items-center justify-between mb-2">
@@ -26,13 +34,13 @@ export function ForecastChart({ data, unitMode, showLegend }: Props) {
             <YAxis tickFormatter={(v) => unitMode === 'pct_qoq' ? `${v}%` : `${v}`} />
             <Tooltip formatter={(v) => typeof v === 'number' ? (unitMode === 'pct_qoq' ? `${v.toFixed(2)}%` : v.toLocaleString()) : v} />
             {showLegend && <Legend />}
-            <Line type="monotone" dataKey="value" name="Actual" stroke="#5b8def" dot={false} strokeWidth={2} />
-            <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#7bdcb5" strokeDasharray="4 4" dot={{ r: 3 }} strokeWidth={2} />
+
+            {/* Render lines only if data exists */}
+            {hasActual && <Line type="monotone" dataKey="value" name="Actual" stroke="#5b8def" dot={false} strokeWidth={2} />}
+            {hasPredicted && <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#7bdcb5" strokeDasharray="4 4" dot={{ r: 3 }} strokeWidth={2} />}
           </LineChart>
         </ResponsiveContainer>
       </div>
     </div>
   )
 }
-
-

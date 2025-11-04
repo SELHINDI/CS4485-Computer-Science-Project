@@ -13,8 +13,8 @@ export default function Multi() {
   const options = useMemo(() => ({
     prediction_years: horizons.length,
     start_year: 2015,
-    end_year: 2025,
-    model_type: "random_forest", // default model
+    end_year: 2030,
+    model_type: "random_forest",
   }), [horizons])
 
   // Mutation hook
@@ -27,33 +27,45 @@ export default function Multi() {
     }
   }, [country, horizons])
 
-  // Historical series data
-  const seriesData = useMemo(() => {
-    const historical = multi.data?.historical_data?.gdp ?? []
-    return historical.map((d: any) => ({ date: d.date, value: d.value }))
+  useEffect(() => {
+    if (multi.data) {
+      console.log("Analyze API Response:", multi.data)
+    }
   }, [multi.data])
 
-  // Add predicted points for chart
-  const chartData = useMemo(() => {
-    const data = [...seriesData]
-    if (multi.data?.predictions) {
-      Object.entries(multi.data.predictions).forEach(([h, v]) => {
-        data.push({ date: `${multi.data.analysis_metadata?.end_year}+${h}`, predicted: v })
-      })
-    }
-    return data
-  }, [seriesData, multi.data])
+  // Separate arrays for actual and predicted data
+  const actualData = useMemo(() => {
+    const historical = multi.data?.data?.historical_data?.gdp ?? []
+    return historical
+      .map((d: any) => ({
+        date: String(d.year),
+        value: d.value
+      }))
+      .sort((a: { date: string }, b: { date: string }) => Number(a.date) - Number(b.date))
+  }, [multi.data])
+  
+  const predictedData = useMemo(() => {
+    const predictions = multi.data?.data?.predictions ?? []
+    return predictions
+      .map((p: any) => ({
+        date: String(p.year),
+        predicted: p.predicted_gdp
+      }))
+      .sort((a: { date: string }, b: { date: string }) => Number(a.date) - Number(b.date))
+  }, [multi.data])
 
   // Table rows for predicted GDP
   const tableRows = useMemo(() => {
-    if (!multi.data?.predictions) return []
-    return Object.entries(multi.data.predictions).map(([h, v]) => ({
-      horizon: h,
-      gdp: v
+    const predictions = multi.data?.data?.predictions ?? []
+    return predictions.map((p: any) => ({
+      horizon: p.year,
+      gdp: p.predicted_gdp
     }))
   }, [multi.data])
 
-  // Type-safe loading flag
+  console.log('Actual Data:', actualData)
+  console.log('Predicted Data:', predictedData)
+
   const isLoading = multi.status === "pending"
 
   return (
@@ -61,9 +73,24 @@ export default function Multi() {
       <Controls showHorizons />
 
       {isLoading ? (
-        <Skeleton className="h-80" />
+        <div className="flex flex-wrap gap-4">
+          <Skeleton className="h-72 flex-1 min-w-[300px]" />
+          <Skeleton className="h-72 flex-1 min-w-[300px]" />
+        </div>
       ) : (
-        <ForecastChart data={chartData} unitMode={unitMode} showLegend />
+        <div className="flex flex-wrap gap-4">
+          {/* Actual GDP chart */}
+          <div className="flex-1 min-w-[300px]">
+            <ForecastChart data={actualData} unitMode={unitMode} showLegend />
+          </div>
+
+          {/* Predicted GDP chart */}
+          <div className="flex-1 min-w-[300px]">
+            <ForecastChart data={predictedData} unitMode={unitMode} showLegend lineDataKey="predicted" 
+  lineName="Predicted" 
+  stroke="#7bdcb5"/>
+          </div>
+        </div>
       )}
 
       <DataTable
